@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+spin = "0.9.8"
+
+[dependencies.lazy_static]
+version = "1.5"
+features = ["spin_no_std"]
