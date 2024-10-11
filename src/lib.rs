@@ -79,7 +79,6 @@ pub fn entry_point() {
     uart_writeByteBlockingActual('c');
     uart_writeByteBlockingActual('c');
     uart_writeByteBlockingActual('c');
-    loop {}
 }
 fn mmio_read(addr: u32) -> u32 {
     unsafe { read_volatile(addr as *mut u32) }

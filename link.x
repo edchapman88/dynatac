@@ -1,10 +1,12 @@
 
 SECTIONS {
-  /* Kernel load address for AArch64 */
+  /* Kernel load address for the Raspberry Pi 4 B. */
   . = 0x80000;
-
+  /* Set the top of the stack at the load address. The stack will grow downwards towards 0x0. */
+  __stack_top = .;
+  /* The following sections are loaded into the memory after 0x80000 (growing towards 0xFFF...). */ 
   .text : {
-    /* LONG(__stack_top); */
+    /* Keep the .text.boot section at the start of .text. This section with contain the program entry point. */
     KEEP(*(.text.boot));
     *(.text*)
     *(.rodata*)
@@ -43,6 +45,3 @@ __data_load_start = LOADADDR(.data);
 /* VMA of the .bss section */
 __bss_start = ADDR(.bss);
 __bss_end   = __bss_start + SIZEOF(.bss);
-
-/* Entry point (for gdb) */
-ENTRY(Reset_Handler);
