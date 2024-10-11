@@ -13,7 +13,7 @@ RUSTFLAGS = \
 TARGET = aarch64-unknown-none-softfloat
 KERNEL_ELF = target/$(TARGET)/release/dynatac
 
-kernel.img : $(KERNEL_ELF)
+kernel8.img : $(KERNEL_ELF)
 	rust-objcopy --strip-all -O binary $< $@
 
 $(KERNEL_ELF) :
@@ -23,3 +23,4 @@ $(KERNEL_ELF) :
 
 clean :
 	rm -r target
+	rm *.img

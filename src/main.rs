@@ -13,13 +13,8 @@ fn panic_handler(_: &core::panic::PanicInfo) -> ! {
 
 // Define the reset handler. Exporting the function with the symbol "Reset_Handler" is not
 // essential.
-#[export_name = "Reset_Handler"]
+#[export_name = "_start"]
+#[link_section = ".text.boot"]
 pub fn reset() {
     entry_point();
 }
-
-// Define a pointer to the reset handler function which can be picked up by the linker and included
-// at the correct position in the vector table.
-#[link_section = ".vectors.reset_handler"]
-#[no_mangle]
-pub static __RESET_HANDLER: fn() = reset;

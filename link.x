@@ -5,7 +5,7 @@ SECTIONS {
 
   .text : {
     /* LONG(__stack_top); */
-    KEEP(*(.vectors.reset_handler));
+    KEEP(*(.text.boot));
     *(.text*)
     *(.rodata*)
   } 
