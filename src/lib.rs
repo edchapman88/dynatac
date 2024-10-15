@@ -2,15 +2,16 @@
 
 mod gpio;
 mod mmio;
-mod uart;
+mod mutex;
+/// pub so that the BLOCKING_WRITER can be used in the globally exported print macros
+pub mod uart;
 
 use uart::uart_io_update;
 
 pub fn entry_point() {
     uart::init();
-    //uart::write_byte_blocking("a".as_bytes()[0]);
-    uart::write_blocking("hello");
-    uart::write("world");
+    println!("Initialised UART");
+
     loop {
         uart_io_update();
     }
