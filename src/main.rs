@@ -4,6 +4,7 @@
 
 use aarch64_cpu::asm;
 use dynatac::entry_point;
+use dynatac::exception;
 use dynatac::println;
 
 mod boot;
@@ -36,6 +37,7 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
 }
 
 unsafe fn kernel_init() -> ! {
+    exception::handling_init();
     entry_point();
     halt_cpu();
 }

@@ -2,19 +2,11 @@
 //
 // Copyright (c) 2021-2023 Andre Richter <andre.o.richter@gmail.com>
 
-//! Architectural boot code.
-//!
-//! # Orientation
-//!
-//! Since arch modules are imported into generic modules using the path attribute, the path of this
-//! file is:
-//!
-//! crate::cpu::boot::arch_boot
-
 use core::arch::global_asm;
 
-// Assembly counterpart to this file.
+// Assembly files.
 global_asm!(include_str!("../boot.s"));
+global_asm!(include_str!("exception.s"));
 
 /// Used by `arch` code to find the early boot core.
 #[no_mangle]

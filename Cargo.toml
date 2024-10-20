@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 # spin = "0.9.8"
 aarch64-cpu = { version = "9.x.x" }
+tock-registers = { version = "0.8.x", default-features = false, features = ["register_types"] }
 
 # [dependencies.lazy_static]
 # version = "=1.4.0"
