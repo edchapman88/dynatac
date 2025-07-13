@@ -1,11 +1,14 @@
+use crate::{
+    gpio::{self, Pull, Select},
+    interupts::gic::IRQNumber,
+    locks::irq_safe_mutex::IRQSafeMutex,
+    mmio,
+};
 use core::fmt;
 use core::fmt::Write;
 
-use crate::{
-    gpio::{self, Pull, Select},
-    mmio,
-    mutex::NullLock,
-};
+/// UART interupt handler
+pub const PL011_UART: IRQNumber = IRQNumber::new(153);
 
 const AUX_BASE: u32 = mmio::PERIPHERAL_BASE + 0x215000;
 const AUX_ENABLES: u32 = AUX_BASE + 4;
@@ -20,9 +23,9 @@ const AUX_MU_BAUD_REG: u32 = AUX_BASE + 104;
 const AUX_UART_CLOCK: u32 = 500000000;
 const UART_MAX_QUEUE: u32 = 100;
 
-pub static BLOCKING_WRITER: NullLock<BlockingWriter> = NullLock::new(BlockingWriter);
+pub static BLOCKING_WRITER: IRQSafeMutex<BlockingWriter> = IRQSafeMutex::new(BlockingWriter);
 
-pub static FIFO_WRITER: NullLock<FIFOWriter> = NullLock::new(FIFOWriter {
+pub static FIFO_WRITER: IRQSafeMutex<FIFOWriter> = IRQSafeMutex::new(FIFOWriter {
     write_cur: 0,
     read_cur: 0,
     buffer: [0; UART_MAX_QUEUE as usize],

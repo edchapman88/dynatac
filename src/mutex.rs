@@ -1,16 +1,16 @@
 use core::cell::UnsafeCell;
 
-pub struct NullLock<T>
+pub struct IQRSafeNullLock<T>
 where
     T: ?Sized,
 {
     data: UnsafeCell<T>,
 }
 
-unsafe impl<T> Send for NullLock<T> where T: ?Sized + Send {}
-unsafe impl<T> Sync for NullLock<T> where T: ?Sized + Send {}
+unsafe impl<T> Send for IQRSafeNullLock<T> where T: ?Sized + Send {}
+unsafe impl<T> Sync for IQRSafeNullLock<T> where T: ?Sized + Send {}
 
-impl<T> NullLock<T> {
+impl<T> IQRSafeNullLock<T> {
     pub const fn new(data: T) -> Self {
         Self {
             data: UnsafeCell::new(data),

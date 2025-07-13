@@ -5,8 +5,8 @@
 use core::arch::global_asm;
 
 // Assembly files.
-global_asm!(include_str!("../boot.s"));
-global_asm!(include_str!("exception.s"));
+global_asm!(include_str!("../asm/boot.s"));
+global_asm!(include_str!("../asm/exception.s"));
 
 /// Used by `arch` code to find the early boot core.
 #[no_mangle]
