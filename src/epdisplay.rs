@@ -16,7 +16,22 @@ const DISPLAY_REFRESH: u8 = 0x12;
 const DATA_START_TRANSMISSION_1: u8 = 0x10;
 const DATA_START_TRANSMISSION_2: u8 = 0x13;
 const VCOM_AND_DATA_INTERVAL_SETTING: u8 = 0x50;
+const RESOLUTION_SETTING: u8 = 0x61;
 const BUFFER_INIT_BYTE: u8 = 0x00; // black
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Colour {
+    BLACK = 0x00,
+    WHITE = 0xFF,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetBuf {
+    Previous = DATA_START_TRANSMISSION_1,
+    Next = DATA_START_TRANSMISSION_2,
+}
 
 struct DisplayDriver<SPI, DC, BUSY> {
     spi: SPI,
@@ -80,23 +95,23 @@ where
         Ok(())
     }
     fn init(&mut self) -> Result<(), DisplayError> {
-        self.reset()?;
+        // self.reset()?;
 
-        self.write_command(POWER_SETTING)?;
-        self.write_data(&[0x03, 0x10, 0x3F, 0x3F, 0x0D])?;
+        // self.write_command(POWER_SETTING)?;
+        // self.write_data(&[0x03, 0x10, 0x3F, 0x3F, 0x0D])?;
 
-        self.write_command(BOOSTER_SOFT_START)?;
-        self.write_data(&[0x17, 0x17, 0x17])?;
+        // self.write_command(BOOSTER_SOFT_START)?;
+        // self.write_data(&[0x17, 0x17, 0x17])?;
 
         self.write_command(PANEL_SETTING)?;
-        // 480x240 + KW mode + soft reset
-        self.write_data(&[0b00011110, 0x8D])?;
+        self.write_data(&[0x1E, 0x0D])?;
+        esp_idf_hal::delay::FreeRtos::delay_ms(10);
+        self.write_command(PANEL_SETTING)?;
+        self.write_data(&[0x1F, 0x0D])?;
 
-        self.write_command(POWER_ON)?;
-        self.busy_wait();
+        // self.write_command(RESOLUTION_SETTING)?;
+        // self.write_data(&[0x1E, 0x01, 0x40])?;
 
-        self.write_command(VCOM_AND_DATA_INTERVAL_SETTING)?;
-        self.write_data(&[0xD7])?;
         Ok(())
     }
 }
@@ -109,25 +124,29 @@ where
 {
     pub fn init(&mut self) -> Result<(), DisplayError> {
         self.driver.init()?;
-        self.update(&*Box::new([BUFFER_INIT_BYTE; BUFFER_SIZE]))?;
         Ok(())
     }
-    fn write_old_frame(&mut self) -> Result<(), DisplayError> {
-        self.driver.write_command(DATA_START_TRANSMISSION_1)?;
-        self.driver.write_data(&*self.buf)?;
-        Ok(())
-    }
-    fn write_new_frame(&mut self, buf: &[u8]) -> Result<(), DisplayError> {
-        self.driver.write_command(DATA_START_TRANSMISSION_2)?;
-        self.driver.write_data(buf)?;
-        Ok(())
-    }
-    pub fn update(&mut self, buf: &[u8; BUFFER_SIZE]) -> Result<(), DisplayError> {
-        self.write_old_frame()?;
-        self.write_new_frame(buf)?;
-        self.buf.copy_from_slice(buf);
+
+    pub fn full_refresh(&mut self) -> Result<(), DisplayError> {
+        self.driver.init()?;
+        self.driver.write_command(VCOM_AND_DATA_INTERVAL_SETTING)?;
+        self.driver.write_data(&[0x97])?;
+        self.driver.write_command(POWER_ON)?;
+        self.driver.busy_wait();
         self.driver.write_command(DISPLAY_REFRESH)?;
         self.driver.busy_wait();
+        Ok(())
+    }
+    pub fn write_fill(&mut self, target: TargetBuf, val: u8) -> Result<(), DisplayError> {
+        self.driver.write_command(target as u8)?;
+        self.driver.write_data(&*Box::new([val; BUFFER_SIZE]))?;
+        Ok(())
+    }
+    pub fn clear(&mut self, colour: Colour) -> Result<(), DisplayError> {
+        self.driver.init()?;
+        self.write_fill(TargetBuf::Previous, colour as u8)?;
+        self.write_fill(TargetBuf::Next, colour as u8)?;
+        self.full_refresh()?;
         Ok(())
     }
 }

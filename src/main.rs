@@ -1,6 +1,6 @@
 mod epdisplay;
 
-use epdisplay::DisplayError;
+use epdisplay::{Colour, DisplayError};
 use esp_idf_hal::gpio::AnyInputPin;
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::prelude::*;
@@ -46,35 +46,17 @@ fn main() -> anyhow::Result<()> {
         Err(DisplayError::General(e_str)) => log::error!("{}", e_str),
         Ok(()) => log::info!("display init success"),
     }
-    let white = Box::new([0xFF; epdisplay::BUFFER_SIZE]);
-    let black = Box::new([0x00; epdisplay::BUFFER_SIZE]);
-    // led_en.set_high()?;
-    let top = Box::new([0xFF; epdisplay::BUFFER_SIZE / 4]);
-    let bottom = Box::new([0x00; 3 * epdisplay::BUFFER_SIZE / 4]);
-    let mut buf = Box::new([0x00; epdisplay::BUFFER_SIZE]);
-    buf[..(epdisplay::BUFFER_SIZE / 4)].copy_from_slice(&*top);
-    buf[(epdisplay::BUFFER_SIZE / 4)..].copy_from_slice(&*bottom);
-
-    // esp_idf_hal::delay::FreeRtos::delay_ms(5000);
-    // let buffer = [0x33; display::BUFFER_SIZE];
-    // dsp.display_frame(&buffer)
-    //     .expect("failed writing to display");
-
-    // Construct the epaper driver, RST pin is None (-1 in Arduino)
 
     log::info!("starting loop");
 
     let mut x = true;
     loop {
-        esp_idf_hal::delay::FreeRtos::delay_ms(5000);
         if x {
-            dsp.update(&*white).expect("failed writing to display");
+            dsp.clear(Colour::BLACK).expect("failed writing to display");
         } else {
-            dsp.update(&*black).expect("failed writing to display");
+            dsp.clear(Colour::WHITE).expect("failed writing to display");
         }
         x = !x;
-
-        // dsp.display_frame(&buffer)
-        //     .expect("failed writing to display");
+        esp_idf_hal::delay::FreeRtos::delay_ms(5000);
     }
 }
