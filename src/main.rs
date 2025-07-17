@@ -1,14 +1,12 @@
-use embedded_hal::delay::DelayNs;
+mod epdisplay;
+
+use epdisplay::DisplayError;
 use esp_idf_hal::gpio::AnyInputPin;
+use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::prelude::*;
 use esp_idf_hal::spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig};
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::sys::link_patches;
-
-use esp_idf_hal::{delay::Ets, gpio::PinDriver, prelude::*, spi};
-
-mod display;
-use display::DisplayError;
 
 fn main() -> anyhow::Result<()> {
     link_patches();
@@ -43,28 +41,19 @@ fn main() -> anyhow::Result<()> {
     let mut led_en = PinDriver::output(&mut peripherals.pins.gpio42)?;
     led_en.set_high()?;
 
-    let mut perif_en = PinDriver::output(&mut peripherals.pins.gpio41)?;
-    // std::thread::sleep(std::time::Duration::from_secs(5));
-    // perif_en.set_low()?;
-    // log::info!("set perif power low");
-    // std::thread::sleep(std::time::Duration::from_secs(5));
-    // perif_en.set_high()?;
-    // log::info!("set perif power high");
-    //
-    // led_en.set_low()?;
-
-    // let mut delay = Ets;
-
-    let mut dsp = display::EPDisplay::new(spi_device_driver, dc, busy);
+    let mut dsp = epdisplay::EPDisplay::new(spi_device_driver, dc, busy);
     match dsp.init() {
         Err(DisplayError::General(e_str)) => log::error!("{}", e_str),
         Ok(()) => log::info!("display init success"),
     }
+    let white = Box::new([0xFF; epdisplay::BUFFER_SIZE]);
+    let black = Box::new([0x00; epdisplay::BUFFER_SIZE]);
     // led_en.set_high()?;
-
-    let buffer = [0xFF; display::BUFFER_SIZE / 2];
-    dsp.display_frame(&buffer)
-        .expect("failed writing to display");
+    let top = Box::new([0xFF; epdisplay::BUFFER_SIZE / 4]);
+    let bottom = Box::new([0x00; 3 * epdisplay::BUFFER_SIZE / 4]);
+    let mut buf = Box::new([0x00; epdisplay::BUFFER_SIZE]);
+    buf[..(epdisplay::BUFFER_SIZE / 4)].copy_from_slice(&*top);
+    buf[(epdisplay::BUFFER_SIZE / 4)..].copy_from_slice(&*bottom);
 
     // esp_idf_hal::delay::FreeRtos::delay_ms(5000);
     // let buffer = [0x33; display::BUFFER_SIZE];
@@ -73,10 +62,18 @@ fn main() -> anyhow::Result<()> {
 
     // Construct the epaper driver, RST pin is None (-1 in Arduino)
 
-    log::info!("Display updated successfully!");
+    log::info!("starting loop");
 
+    let mut x = true;
     loop {
-        esp_idf_hal::delay::FreeRtos::delay_ms(3000);
+        esp_idf_hal::delay::FreeRtos::delay_ms(5000);
+        if x {
+            dsp.update(&*white).expect("failed writing to display");
+        } else {
+            dsp.update(&*black).expect("failed writing to display");
+        }
+        x = !x;
+
         // dsp.display_frame(&buffer)
         //     .expect("failed writing to display");
     }
